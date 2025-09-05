@@ -19,7 +19,7 @@ import ResetPassword from './components/auth/ResetPassword';
 import VerifyEmail from './components/auth/VerifyEmail';
 import Dashboard from './components/dashboard/Dashboard';
 import Topics from './components/topics/Topics';
-import Progress from './components/progress/Progress';
+
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 // Create theme
@@ -150,7 +150,7 @@ const AppContent: React.FC = () => {
           element={
             <ProtectedRoute>
               <Navbar />
-              <Progress />
+            
             </ProtectedRoute>
           }
         />
