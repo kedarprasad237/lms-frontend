@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react'; // React hooks
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -19,6 +19,7 @@ import ResetPassword from './components/auth/ResetPassword';
 import VerifyEmail from './components/auth/VerifyEmail';
 import Dashboard from './components/dashboard/Dashboard';
 import Topics from './components/topics/Topics';
+import Progress from './components/progress/Progress';
 
 import LoadingSpinner from './components/common/LoadingSpinner';
 
@@ -42,10 +43,25 @@ const theme = createTheme({
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, token } = useAppSelector((state) => state.auth);
+  const { user, token, loading } = useAppSelector((state) => state.auth);
+  const storedToken = localStorage.getItem('token');
   
-  if (!token || !user) {
+  // If still loading, show loading spinner
+  if (loading) {
+    return <LoadingSpinner message="Authenticating..." />;
+  }
+  
+  // Check both Redux token and localStorage token
+  const hasToken = token || storedToken;
+  
+  // If no token, redirect to login
+  if (!hasToken) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // If token exists but no user yet, show loading (user is being fetched)
+  if (hasToken && !user) {
+    return <LoadingSpinner message="Loading user data..." />;
   }
   
   return <>{children}</>;
@@ -54,8 +70,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // Public Route Component (redirect if authenticated)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, token } = useAppSelector((state) => state.auth);
+  const storedToken = localStorage.getItem('token');
   
-  if (token && user) {
+  const hasToken = token || storedToken;
+  
+  if (hasToken && user) {
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -65,20 +84,44 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // Main App Component
 const AppContent: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { loading, token, user } = useAppSelector((state) => state.auth);
+  const { loading, user, token } = useAppSelector((state) => state.auth);
   const hasFetchedUser = useRef(false);
+  const [isInitializing, setIsInitializing] = React.useState(true);
 
   useEffect(() => {
-    if (token && !user && !hasFetchedUser.current) {
-      hasFetchedUser.current = true;
-      dispatch(getCurrentUser());
-    } else if (!token) {
-      hasFetchedUser.current = false;
-    }
-  }, [dispatch, token, user]);
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      console.log('Initializing auth with token:', storedToken ? 'exists' : 'missing');
+      console.log('Current user state:', user);
+      console.log('Redux token state:', token);
+      
+      // If we have a token in localStorage but no user, fetch user data
+      if (storedToken && !user && !hasFetchedUser.current) {
+        hasFetchedUser.current = true;
+        console.log('Fetching current user...');
+        try {
+          const result = await dispatch(getCurrentUser()).unwrap();
+          console.log('User fetched successfully:', result);
+        } catch (error) {
+          console.error('Failed to fetch user:', error);
+          // Token is invalid, clear it
+          localStorage.removeItem('token');
+          hasFetchedUser.current = false;
+        }
+      } else if (!storedToken) {
+        console.log('No token found, user should be logged out');
+        hasFetchedUser.current = false;
+      }
+      
+      setIsInitializing(false);
+    };
 
-  if (loading) {
-    return <LoadingSpinner />;
+    initializeAuth();
+  }, [dispatch, user, token]);
+
+  // Show loading spinner while initializing or loading
+  if (isInitializing || loading) {
+    return <LoadingSpinner message="Initializing..." />;
   }
 
   return (
@@ -150,7 +193,7 @@ const AppContent: React.FC = () => {
           element={
             <ProtectedRoute>
               <Navbar />
-            
+              <Progress />
             </ProtectedRoute>
           }
         />

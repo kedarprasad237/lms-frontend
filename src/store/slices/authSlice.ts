@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-backend-a5xu.onrender.com//api';
 
 export interface User {
   id: string;
@@ -226,11 +226,16 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        // Ensure token is set from localStorage
+        state.token = localStorage.getItem('token');
       })
-      .addCase(getCurrentUser.rejected, (state) => {
+      .addCase(getCurrentUser.rejected, (state, action) => {
         state.loading = false;
         state.user = null;
         state.token = null;
+        state.error = action.payload as string;
+        // Clear invalid token from localStorage
+        localStorage.removeItem('token');
       });
   },
 });

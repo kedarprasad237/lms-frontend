@@ -1,18 +1,15 @@
 import React, { useEffect } from 'react';
 import {
   Container,
-  Paper,
   Typography,
   Box,
   Card,
   CardContent,
   LinearProgress,
   Chip,
-  Alert,
 } from '@mui/material';
 import {
   TrendingUp,
-  Assignment,
   CheckCircle,
   Pending,
   Code,
@@ -21,6 +18,7 @@ import {
   School,
   Psychology,
   Memory,
+  Assignment,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchProgressSummary } from '../../store/slices/progressSlice';
@@ -29,7 +27,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 
 const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { summary, topicProgress, loading } = useAppSelector((state: any) => state.progress);
+  const { summary, loading } = useAppSelector((state: any) => state.progress);
   const { loading: topicsLoading } = useAppSelector((state: any) => state.topics);
 
   useEffect(() => {
@@ -38,6 +36,11 @@ const Dashboard: React.FC = () => {
   }, [dispatch]);
 
   if (loading || topicsLoading) {
+    return <LoadingSpinner message="Loading your progress..." />;
+  }
+
+  // Safety check for summary
+  if (!summary) {
     return <LoadingSpinner message="Loading your progress..." />;
   }
 
@@ -188,8 +191,7 @@ const Dashboard: React.FC = () => {
           />
         </Box>
 
-      {summary && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {/* Top Row - Overall Progress and Statistics */}
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
             {/* Overall Progress Card */}
@@ -200,23 +202,38 @@ const Dashboard: React.FC = () => {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
               }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <TrendingUp color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" component="h2">
-                      CSE Learning Progress
-                    </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Box sx={{ 
+                      p: 1, 
+                      borderRadius: '50%', 
+                      bgcolor: 'primary.light', 
+                      mr: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <TrendingUp color="primary" sx={{ fontSize: 24 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
+                        CSE Learning Progress
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Track your journey
+                      </Typography>
+                    </Box>
                   </Box>
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="h3" color="primary">
-                      {summary.overallCompletionPercentage}%
+                      {summary.percentage || 0}%
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {summary.totalCompleted} of {summary.totalSubtopics} CS concepts mastered
+                      {summary.completed || 0} of {summary.total || 0} CS concepts mastered
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
-                    value={summary.overallCompletionPercentage}
+                    value={summary.percentage || 0}
                     sx={{ height: 8, borderRadius: 4 }}
                   />
                 </CardContent>
@@ -231,25 +248,73 @@ const Dashboard: React.FC = () => {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
               }}>
                 <CardContent>
-                  <Typography variant="h6" component="h2" gutterBottom>
-                    Learning Analytics
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Box sx={{ flex: 1, textAlign: 'center' }}>
-                      <CheckCircle color="success" sx={{ fontSize: 40, mb: 1 }} />
-                      <Typography variant="h4" color="success.main">
-                        {summary.totalCompleted}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Box sx={{ 
+                      p: 1, 
+                      borderRadius: '50%', 
+                      bgcolor: 'secondary.light', 
+                      mr: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Assignment color="secondary" sx={{ fontSize: 24 }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
+                        Learning Analytics
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
+                        Your achievements
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 3 }}>
+                    <Box sx={{ 
+                      flex: 1, 
+                      textAlign: 'center',
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: 'rgba(76, 175, 80, 0.05)',
+                      border: '1px solid rgba(76, 175, 80, 0.2)'
+                    }}>
+                      <Box sx={{ 
+                        display: 'inline-flex',
+                        p: 1.5,
+                        borderRadius: '50%',
+                        bgcolor: 'success.light',
+                        mb: 1
+                      }}>
+                        <CheckCircle color="success" sx={{ fontSize: 32 }} />
+                      </Box>
+                      <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                        {summary.completed || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: '500' }}>
                         Concepts Mastered
                       </Typography>
                     </Box>
-                    <Box sx={{ flex: 1, textAlign: 'center' }}>
-                      <Pending color="warning" sx={{ fontSize: 40, mb: 1 }} />
-                      <Typography variant="h4" color="warning.main">
-                        {summary.totalPending}
+                    <Box sx={{ 
+                      flex: 1, 
+                      textAlign: 'center',
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: 'rgba(255, 152, 0, 0.05)',
+                      border: '1px solid rgba(255, 152, 0, 0.2)'
+                    }}>
+                      <Box sx={{ 
+                        display: 'inline-flex',
+                        p: 1.5,
+                        borderRadius: '50%',
+                        bgcolor: 'warning.light',
+                        mb: 1
+                      }}>
+                        <Pending color="warning" sx={{ fontSize: 32 }} />
+                      </Box>
+                      <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                        {summary.pending || 0}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: '500' }}>
                         In Progress
                       </Typography>
                     </Box>
@@ -259,135 +324,59 @@ const Dashboard: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Difficulty Progress */}
+          {/* Learning Streak */}
           <Card sx={{ 
             background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
           }}>
             <CardContent>
-              <Typography variant="h6" component="h2" gutterBottom>
-                Progress by Difficulty
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                <Box sx={{ flex: 1, textAlign: 'center' }}>
-                  <Chip
-                    label="Easy"
-                    color="success"
-                    sx={{ mb: 1 }}
-                  />
-                  <Typography variant="h5" color="success.main">
-                    {summary.difficultyStats.easy}%
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={summary.difficultyStats.easy}
-                    color="success"
-                    sx={{ mt: 1 }}
-                  />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ 
+                  p: 1, 
+                  borderRadius: '50%', 
+                  bgcolor: 'primary.light', 
+                  mr: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <School color="primary" sx={{ fontSize: 24 }} />
                 </Box>
-                <Box sx={{ flex: 1, textAlign: 'center' }}>
-                  <Chip
-                    label="Medium"
-                    color="warning"
-                    sx={{ mb: 1 }}
-                  />
-                  <Typography variant="h5" color="warning.main">
-                    {summary.difficultyStats.medium}%
+                <Box>
+                  <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
+                    Learning Streak
                   </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={summary.difficultyStats.medium}
-                    color="warning"
-                    sx={{ mt: 1 }}
-                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Keep the momentum going!
+                  </Typography>
                 </Box>
-                <Box sx={{ flex: 1, textAlign: 'center' }}>
-                  <Chip
-                    label="Hard"
-                    color="error"
-                    sx={{ mb: 1 }}
-                  />
-                  <Typography variant="h5" color="error.main">
-                    {summary.difficultyStats.hard}%
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h3" color="primary.main" sx={{ fontWeight: 'bold' }}>
+                    7
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Days
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    Keep up the great work! You're on a learning streak.
                   </Typography>
                   <LinearProgress
                     variant="determinate"
-                    value={summary.difficultyStats.hard}
-                    color="error"
-                    sx={{ mt: 1 }}
+                    value={70}
+                    color="primary"
+                    sx={{ height: 8, borderRadius: 4 }}
                   />
                 </Box>
               </Box>
             </CardContent>
           </Card>
 
-          {/* Topic Progress */}
-          <Card sx={{ 
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-          }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Assignment color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6" component="h2">
-                  Topic Progress
-                </Typography>
-              </Box>
-              {topicProgress.length === 0 ? (
-                <Alert severity="info">
-                  No topics available. Please check back later.
-                </Alert>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
-                  {topicProgress.map((topic: any) => (
-                    <Paper
-                      key={topic.topicId}
-                      elevation={1}
-                      sx={{
-                        p: 2,
-                        width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' },
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}
-                    >
-                      <Typography variant="h6" gutterBottom>
-                        {topic.topicName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {topic.completedSubtopics} of {topic.totalSubtopics} completed
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={topic.completionPercentage}
-                        sx={{ mb: 2 }}
-                      />
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <Chip
-                          size="small"
-                          label={`Easy: ${topic.difficultyProgress.easy.completed}/${topic.difficultyProgress.easy.total}`}
-                          color="success"
-                        />
-                        <Chip
-                          size="small"
-                          label={`Medium: ${topic.difficultyProgress.medium.completed}/${topic.difficultyProgress.medium.total}`}
-                          color="warning"
-                        />
-                        <Chip
-                          size="small"
-                          label={`Hard: ${topic.difficultyProgress.hard.completed}/${topic.difficultyProgress.hard.total}`}
-                          color="error"
-                        />
-                      </Box>
-                    </Paper>
-                  ))}
-                </Box>
-              )}
-            </CardContent>
-          </Card>
         </Box>
-      )}
       </Container>
     </Box>
   );
